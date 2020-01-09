@@ -51,6 +51,7 @@ type Orderer struct {
 	failFast       bool
 	allowInsecure  bool
 	commManager    fab.CommManager
+	userAgent      string
 }
 
 // Option describes a functional parameter for the New constructor
@@ -74,6 +75,7 @@ func New(config fab.EndpointConfig, opts ...Option) (*Orderer, error) {
 	if orderer.kap.Time > 0 {
 		grpcOpts = append(grpcOpts, grpc.WithKeepaliveParams(orderer.kap))
 	}
+	grpcOpts = append(grpcOpts, grpc.WithUserAgent(orderer.userAgent))
 	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(grpc.WaitForReady(!orderer.failFast)))
 	if endpoint.AttemptSecured(orderer.url, orderer.allowInsecure) {
 		//tls config
@@ -156,6 +158,7 @@ func FromOrdererConfig(ordererCfg *fab.OrdererConfig) Option {
 		o.kap = getKeepAliveOptions(ordererCfg)
 		o.failFast = getFailFast(ordererCfg)
 		o.allowInsecure = isInsecureConnectionAllowed(ordererCfg)
+		o.userAgent = getUserAgent(ordererCfg)
 
 		return nil
 	}
@@ -181,6 +184,15 @@ func getServerNameOverride(ordererCfg *fab.OrdererConfig) string {
 	}
 	return serverNameOverride
 }
+
+func getUserAgent(ordererCfg *fab.OrdererConfig) string {
+	userAgent := ""
+	if str, ok := ordererCfg.GRPCOptions["user-agent"].(string); ok {
+		userAgent = str
+	}
+	return userAgent
+}
+
 
 func getFailFast(ordererCfg *fab.OrdererConfig) bool {
 

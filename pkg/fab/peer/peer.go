@@ -35,6 +35,7 @@ type Peer struct {
 	failFast    bool
 	inSecure    bool
 	commManager fab.CommManager
+	userAgent string
 }
 
 // Option describes a functional parameter for the New constructor
@@ -66,6 +67,7 @@ func New(config fab.EndpointConfig, opts ...Option) (*Peer, error) {
 			failFast:           peer.failFast,
 			allowInsecure:      peer.inSecure,
 			commManager:        peer.commManager,
+			userAgent:	    peer.userAgent,
 		}
 		processor, err := newPeerEndorser(&endorseRequest)
 
@@ -146,9 +148,20 @@ func FromPeerConfig(peerCfg *fab.NetworkPeer) Option {
 		p.mspID = peerCfg.MSPID
 		p.kap = getKeepAliveOptions(peerCfg)
 		p.failFast = getFailFast(peerCfg)
+		p.userAgent = getUserAgent(peerCfg)
 		return nil
 	}
 }
+
+func getUserAgent(peerCfg *fab.NetworkPeer) string {
+	userAgent := ""
+	if str, ok := peerCfg.GRPCOptions["user-agent"].(string); ok {
+		userAgent = str
+	}
+
+	return userAgent
+}
+
 
 func getServerNameOverride(peerCfg *fab.NetworkPeer) string {
 	serverHostOverride := ""

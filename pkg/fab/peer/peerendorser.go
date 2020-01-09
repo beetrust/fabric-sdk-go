@@ -55,6 +55,7 @@ type peerEndorserRequest struct {
 	failFast           bool
 	allowInsecure      bool
 	commManager        fab.CommManager
+	userAgent string
 }
 
 func newPeerEndorser(endorseReq *peerEndorserRequest) (*peerEndorser, error) {
@@ -67,6 +68,7 @@ func newPeerEndorser(endorseReq *peerEndorserRequest) (*peerEndorser, error) {
 	if endorseReq.kap.Time > 0 {
 		grpcOpts = append(grpcOpts, grpc.WithKeepaliveParams(endorseReq.kap))
 	}
+	grpcOpts = append(grpcOpts, grpc.WithUserAgent(endorseReq.userAgent))
 	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(grpc.WaitForReady(!endorseReq.failFast)))
 
 	if endpoint.AttemptSecured(endorseReq.target, endorseReq.allowInsecure) {
