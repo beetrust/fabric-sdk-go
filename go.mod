@@ -46,4 +46,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.1
 )
 
+replace github.com/hyperledger/fabric-protos-go => github.com/lyszhang/fabric-protos-go v0.0.0-20200223021233-8b79904f14e2
+
 go 1.13
