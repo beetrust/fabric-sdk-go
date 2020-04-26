@@ -30,6 +30,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
 )
 
 // struct to hold info required for PKCS#8
@@ -146,6 +148,12 @@ func PrivateKeyToPEM(privateKey interface{}, pwd []byte) ([]byte, error) {
 				Bytes: raw,
 			},
 		), nil
+		// add by bryan
+	case *sm2.PrivateKey:
+		if k == nil {
+			return nil, errors.New("Invalid sm2 private key. It must be different from nil.")
+		}
+		return sm2.WritePrivateKeytoMem(k, nil)
 	default:
 		return nil, errors.New("Invalid key type. It must be *ecdsa.PrivateKey or *rsa.PrivateKey")
 	}
@@ -204,6 +212,11 @@ func DERToPrivateKey(der []byte) (key interface{}, err error) {
 
 	if key, err = x509.ParseECPrivateKey(der); err == nil {
 		return
+	}
+
+	// add by bryan
+	if key, err := sm2.ParsePKCS8UnecryptedPrivateKey(der); err == nil {
+		return key, nil
 	}
 
 	return nil, errors.New("Invalid key type. The DER must contain an rsa.PrivateKey or ecdsa.PrivateKey")
@@ -457,7 +470,11 @@ func DERToPublicKey(raw []byte) (pub interface{}, err error) {
 		return nil, errors.New("Invalid DER. It must be different from nil.")
 	}
 
-	key, err := x509.ParsePKIXPublicKey(raw)
+	// modify by bryan
+	key, err1 := x509.ParsePKIXPublicKey(raw)
+	if err1 != nil {
+		key, err = sm2.ParseSm2PublicKey(raw)
+	}
 
 	return key, err
 }

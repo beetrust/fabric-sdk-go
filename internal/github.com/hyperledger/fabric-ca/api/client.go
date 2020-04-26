@@ -167,7 +167,7 @@ type GetTCertBatchResponse struct {
 // TCert encapsulates a signed transaction certificate and optionally a map of keys
 type TCert struct {
 	Cert []byte            `json:"cert"`
-	Keys map[string][]byte `json:"keys,omitempty"` //base64 encoded string as value
+	Keys map[string][]byte `json:"keys,omitempty"` // base64 encoded string as value
 }
 
 // GetCAInfoRequest is request to get generic CA information
@@ -392,5 +392,6 @@ func (ar *AttributeRequest) IsRequired() bool {
 // from the object returned by the csr.NewBasicKeyRequest() function
 func NewBasicKeyRequest() *BasicKeyRequest {
 	bkr := csr.NewBasicKeyRequest()
+	bkr.A = "gmsm2"
 	return &BasicKeyRequest{Algo: bkr.A, Size: bkr.S}
 }

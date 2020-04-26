@@ -13,14 +13,14 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 )
 
-//NewCryptoSuite returns cryptosuite adaptor for given bccsp.BCCSP implementation
+// NewCryptoSuite returns cryptosuite adaptor for given bccsp.BCCSP implementation
 func NewCryptoSuite(bccsp bccsp.BCCSP) core.CryptoSuite {
 	return &CryptoSuite{
 		BCCSP: bccsp,
 	}
 }
 
-//GetKey returns implementation of of cryptosuite.Key
+// GetKey returns implementation of of cryptosuite.Key
 func GetKey(newkey bccsp.Key) core.Key {
 	return &key{newkey}
 }
@@ -31,9 +31,9 @@ type CryptoSuite struct {
 }
 
 // KeyGen is a wrapper of BCCSP.KeyGen
-func (c *CryptoSuite) KeyGen(opts core.KeyGenOpts) (k core.Key, err error) {
+func (c *CryptoSuite) KeyGen(opts core.KeyGenOpts) (k core.Key, k1 bccsp.Key, err error) {
 	key, err := c.BCCSP.KeyGen(opts)
-	return GetKey(key), err
+	return GetKey(key), key, err
 }
 
 // KeyImport is a wrapper of BCCSP.KeyImport

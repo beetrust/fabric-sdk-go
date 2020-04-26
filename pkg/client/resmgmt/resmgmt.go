@@ -27,6 +27,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkinternal/configtxlator/update"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/verifier"
@@ -110,9 +112,11 @@ type requestOptions struct {
 //SaveChannelRequest holds parameters for save channel request
 type SaveChannelRequest struct {
 	ChannelID         string
-	ChannelConfig     io.Reader             // ChannelConfig data source
-	ChannelConfigPath string                // Convenience option to use the named file as ChannelConfig reader
-	SigningIdentities []msp.SigningIdentity // Users that sign channel configuration
+	ChannelConfig     io.Reader // ChannelConfig data source
+	ChannelConfigPath string    // Convenience option to use the named file as ChannelConfig reader
+	// Users that sign channel configuration
+	// deprecated - one entity shouldn't have access to another entities' keys to sign on their behalf
+	SigningIdentities []msp.SigningIdentity
 }
 
 // SaveChannelResponse contains response parameters for save channel
@@ -919,21 +923,21 @@ func (rc *Client) SaveChannel(req SaveChannelRequest, options ...RequestOption) 
 
 	if req.ChannelConfigPath != "" {
 		configReader, err1 := os.Open(req.ChannelConfigPath)
+		defer loggedClose(configReader)
 		if err1 != nil {
 			return SaveChannelResponse{}, errors.Wrapf(err1, "opening channel config file failed")
 		}
-		defer loggedClose(configReader)
 		req.ChannelConfig = configReader
 	}
 
 	err = rc.validateSaveChannelRequest(req)
 	if err != nil {
-		return SaveChannelResponse{}, errors.WithMessage(err, "reading channel config file failed")
+		return SaveChannelResponse{}, err
 	}
 
 	logger.Debugf("saving channel: %s", req.ChannelID)
 
-	chConfig, err := extractChConfigData(req.ChannelConfig)
+	chConfig, err := extractChConfigTx(req.ChannelConfig)
 	if err != nil {
 		return SaveChannelResponse{}, errors.WithMessage(err, "extracting channel config from ConfigTx failed")
 	}
@@ -943,20 +947,36 @@ func (rc *Client) SaveChannel(req SaveChannelRequest, options ...RequestOption) 
 		return SaveChannelResponse{}, errors.WithMessage(err, "failed to find orderer for request")
 	}
 
+	txID, err := rc.signAndSubmitChannelConfigTx(
+		req.ChannelID,
+		req.SigningIdentities,
+		opts,
+		chConfig,
+		orderer,
+	)
+	if err != nil {
+		return SaveChannelResponse{}, errors.WithMessage(err, "create channel failed")
+	}
+
+	return SaveChannelResponse{TransactionID: txID}, nil
+}
+
+func (rc *Client) signAndSubmitChannelConfigTx(channelID string, signingIdentities []msp.SigningIdentity, opts requestOptions, chConfigTx []byte, orderer fab.Orderer) (fab.TransactionID, error) {
 	var configSignatures []*common.ConfigSignature
+	var err error
 	if opts.Signatures != nil {
 		configSignatures = opts.Signatures
 	} else {
-		configSignatures, err = rc.getConfigSignatures(req, chConfig)
+		configSignatures, err = rc.getConfigSignatures(signingIdentities, chConfigTx)
 		if err != nil {
-			return SaveChannelResponse{}, err
+			return "", err
 		}
 	}
 
 	request := resource.CreateChannelRequest{
-		Name:       req.ChannelID,
+		Name:       channelID,
 		Orderer:    orderer,
-		Config:     chConfig,
+		Config:     chConfigTx,
 		Signatures: configSignatures,
 	}
 
@@ -965,10 +985,28 @@ func (rc *Client) SaveChannel(req SaveChannelRequest, options ...RequestOption) 
 
 	txID, err := resource.CreateChannel(reqCtx, request, resource.WithRetry(opts.Retry))
 	if err != nil {
-		return SaveChannelResponse{}, errors.WithMessage(err, "create channel failed")
+		return "", errors.WithMessage(err, "create channel failed")
+	}
+	return txID, nil
+}
+
+// CalculateConfigUpdate calculates channel config update based on the difference between provided
+// current channel config and proposed new channel config.
+func CalculateConfigUpdate(channelID string, currentConfig, newConfig *common.Config) (*common.ConfigUpdate, error) {
+
+	if channelID == "" || currentConfig == nil || newConfig == nil {
+		return nil, errors.New("must provide channel ID and current and new channel config")
 	}
 
-	return SaveChannelResponse{TransactionID: txID}, nil
+	if currentConfig.Sequence != newConfig.Sequence {
+		return nil, errors.New("channel config sequence mismatch")
+	}
+	configUpdate, err := update.Compute(currentConfig, newConfig)
+	if err != nil {
+		return nil, errors.WithMessage(err, "config update computation failed")
+	}
+	configUpdate.ChannelId = channelID
+	return configUpdate, nil
 }
 
 func (rc *Client) validateSaveChannelRequest(req SaveChannelRequest) error {
@@ -979,13 +1017,13 @@ func (rc *Client) validateSaveChannelRequest(req SaveChannelRequest) error {
 	return nil
 }
 
-func (rc *Client) getConfigSignatures(req SaveChannelRequest, chConfig []byte) ([]*common.ConfigSignature, error) {
+func (rc *Client) getConfigSignatures(signingIdentities []msp.SigningIdentity, chConfig []byte) ([]*common.ConfigSignature, error) {
 	// Signing user has to belong to one of configured channel organisations
 	// In case that order org is one of channel orgs we can use context user
 	var signers []msp.SigningIdentity
 
-	if len(req.SigningIdentities) > 0 {
-		for _, id := range req.SigningIdentities {
+	if len(signingIdentities) > 0 {
+		for _, id := range signingIdentities {
 			if id != nil {
 				signers = append(signers, id)
 			}
@@ -999,7 +1037,7 @@ func (rc *Client) getConfigSignatures(req SaveChannelRequest, chConfig []byte) (
 	return rc.createCfgSigFromIDs(chConfig, signers...)
 }
 
-func extractChConfigData(channelConfigReader io.Reader) ([]byte, error) {
+func extractChConfigTx(channelConfigReader io.Reader) ([]byte, error) {
 	if channelConfigReader == nil {
 		return nil, errors.New("must provide a non empty channel config file")
 	}
@@ -1036,7 +1074,7 @@ func (rc *Client) CreateConfigSignature(signer msp.SigningIdentity, channelConfi
 // CreateConfigSignatureFromReader creates a signature for the given client, custom signers and chConfig from io.Reader argument
 //	return ConfigSignature will be signed internally by the SDK. It can be passed to WithConfigSignatures() option
 func (rc *Client) CreateConfigSignatureFromReader(signer msp.SigningIdentity, channelConfig io.Reader) (*common.ConfigSignature, error) {
-	chConfig, err := extractChConfigData(channelConfig)
+	chConfig, err := extractChConfigTx(channelConfig)
 	if err != nil {
 		return nil, errors.WithMessage(err, "extracting channel config failed")
 	}
@@ -1078,7 +1116,7 @@ func (rc *Client) CreateConfigSignatureData(signer msp.SigningIdentity, channelC
 //  3. assign its Signature field with the generated signature of 'signatureHeaderData.signingBytes' from the external tool
 //  Then use WithConfigSignatures() option to pass this new instance for channel updates
 func (rc *Client) CreateConfigSignatureDataFromReader(signer msp.SigningIdentity, channelConfig io.Reader) (signatureHeaderData resource.ConfigSignatureData, e error) {
-	chConfig, err := extractChConfigData(channelConfig)
+	chConfig, err := extractChConfigTx(channelConfig)
 	if err != nil {
 		e = errors.WithMessage(err, "extracting channel config failed")
 		return

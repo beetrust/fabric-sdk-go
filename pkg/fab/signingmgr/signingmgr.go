@@ -7,11 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package signingmgr
 
 import (
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/logging"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite"
 	"github.com/pkg/errors"
 )
+
+var logger = logging.NewLogger("fabsdk/fab")
 
 // SigningManager is used for signing objects with private key
 type SigningManager struct {
@@ -25,7 +28,8 @@ type SigningManager struct {
 // @param {Config} config - configuration provider
 // @returns {SigningManager} new signing manager
 func New(cryptoProvider core.CryptoSuite) (*SigningManager, error) {
-	return &SigningManager{cryptoProvider: cryptoProvider, hashOpts: cryptosuite.GetSHAOpts()}, nil
+	// modify by bryan. The hash algorithm must same as blockchain with SM3
+	return &SigningManager{cryptoProvider: cryptoProvider, hashOpts: cryptosuite.GetSM3Opts()}, nil
 }
 
 // Sign will sign the given object using provided key

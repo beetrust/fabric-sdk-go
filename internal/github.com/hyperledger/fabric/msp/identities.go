@@ -13,7 +13,6 @@ package msp
 import (
 	"crypto"
 	"crypto/rand"
-	"crypto/x509"
 	"encoding/hex"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
@@ -26,6 +25,7 @@ import (
 	bccsp "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/cryptosuitebridge"
 	flogging "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/logbridge"
 	logging "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/sdkpatch/logbridge"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
 )
 
@@ -36,7 +36,7 @@ type identity struct {
 	id *IdentityIdentifier
 
 	// cert contains the x.509 certificate that signs the public key of this instance
-	cert *x509.Certificate
+	cert *sm2.Certificate
 
 	// this is the public key of this instance
 	pk core.Key
@@ -45,7 +45,7 @@ type identity struct {
 	msp *bccspmsp
 }
 
-func newIdentity(cert *x509.Certificate, pk core.Key, msp *bccspmsp) (Identity, error) {
+func newIdentity(cert *sm2.Certificate, pk core.Key, msp *bccspmsp) (Identity, error) {
 	if mspIdentityLogger.IsEnabledFor(logging.DEBUG) {
 		mspIdentityLogger.Debugf("Creating identity instance for cert %s", certToPEM(cert))
 	}
@@ -188,6 +188,8 @@ func (id *identity) getHashOpt(hashFamily string) (core.HashOpts, error) {
 		return bccsp.GetHashOpt(bccsp.SHA256)
 	case bccsp.SHA3:
 		return bccsp.GetHashOpt(bccsp.SHA3_256)
+	case bccsp.GMSM3:
+		return bccsp.GetHashOpt(bccsp.GMSM3)
 	}
 	return nil, errors.Errorf("hash familiy not recognized [%s]", hashFamily)
 }
@@ -200,8 +202,8 @@ type signingidentity struct {
 	signer crypto.Signer
 }
 
-func newSigningIdentity(cert *x509.Certificate, pk core.Key, signer crypto.Signer, msp *bccspmsp) (SigningIdentity, error) {
-	//mspIdentityLogger.Infof("Creating signing identity instance for ID %s", id)
+func newSigningIdentity(cert *sm2.Certificate, pk core.Key, signer crypto.Signer, msp *bccspmsp) (SigningIdentity, error) {
+	// mspIdentityLogger.Infof("Creating signing identity instance for ID %s", id)
 	mspId, err := newIdentity(cert, pk, msp)
 	if err != nil {
 		return nil, err
@@ -211,7 +213,7 @@ func newSigningIdentity(cert *x509.Certificate, pk core.Key, signer crypto.Signe
 
 // Sign produces a signature over msg, signed by this instance
 func (id *signingidentity) Sign(msg []byte) ([]byte, error) {
-	//mspIdentityLogger.Infof("Signing message")
+	// mspIdentityLogger.Infof("Signing message")
 
 	// Compute Hash
 	hashOpt, err := id.getHashOpt(id.msp.cryptoConfig.SignatureHashFamily)

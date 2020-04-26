@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"hash"
 
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 )
 
@@ -18,8 +19,8 @@ type MockCryptoSuite struct {
 }
 
 // KeyGen mock key gen
-func (m *MockCryptoSuite) KeyGen(opts core.KeyGenOpts) (k core.Key, err error) {
-	return nil, nil
+func (m *MockCryptoSuite) KeyGen(opts core.KeyGenOpts) (k core.Key, k1 bccsp.Key, err error) {
+	return nil, nil, nil
 }
 
 // KeyImport mock key import
@@ -49,7 +50,7 @@ func (m *MockCryptoSuite) Sign(k core.Key, digest []byte,
 	return []byte("testSignature"), nil
 }
 
-//Verify mock verify implementation
+// Verify mock verify implementation
 func (m *MockCryptoSuite) Verify(k core.Key, signature, digest []byte, opts core.SignerOpts) (valid bool, err error) {
 	return true, nil
 }

@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package endpoint
 
 import (
-	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"regexp"
 
 	"github.com/pkg/errors"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
 )
 
 // IsTLSEnabled is a generic function that expects a URL and verifies if it has
@@ -104,13 +104,13 @@ func (cfg *TLSConfig) LoadBytes() error {
 	return nil
 }
 
-// TLSCert returns the tls certificate as a *x509.Certificate by loading it either from the embedded Pem or Path
-func (cfg *TLSConfig) TLSCert() (*x509.Certificate, bool, error) {
+// TLSCert returns the tls certificate as a *sm2.Certificate by loading it either from the embedded Pem or Path
+func (cfg *TLSConfig) TLSCert() (*sm2.Certificate, bool, error) {
 
 	block, _ := pem.Decode(cfg.bytes)
 
 	if block != nil {
-		pub, err := x509.ParseCertificate(block.Bytes)
+		pub, err := sm2.ParseCertificate(block.Bytes)
 		if err != nil {
 			return nil, false, errors.Wrap(err, "certificate parsing failed")
 		}

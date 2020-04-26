@@ -10,9 +10,9 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/pem"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmtls"
 	"io"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/logging"
@@ -58,7 +58,7 @@ func GetPublicKeyFromCert(cert []byte, cs core.CryptoSuite) (core.Key, error) {
 		return nil, errors.Errorf("Unable to decode cert bytes [%v]", cert)
 	}
 
-	x509Cert, err := x509.ParseCertificate(dcert.Bytes)
+	x509Cert, err := sm2.ParseCertificate(dcert.Bytes)
 	if err != nil {
 		return nil, errors.Errorf("Unable to parse cert from decoded bytes: %s", err)
 	}
@@ -96,7 +96,7 @@ func X509KeyPair(certPEMBlock []byte, pk core.Key, cs core.CryptoSuite) (tls.Cer
 	}
 
 	// We are parsing public key for TLS to find its type
-	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+	x509Cert, err := sm2.ParseCertificate(cert.Certificate[0])
 	if err != nil {
 		return fail(err)
 	}

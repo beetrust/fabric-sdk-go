@@ -73,6 +73,11 @@ func DefaultInitialized() bool {
 	return atomic.LoadInt32(&initialized) > 0
 }
 
+//GetSM3Opts returns options relating to sm3.
+func GetSM3Opts() core.HashOpts {
+	return &bccsp.GMSM3Opts{}
+}
+
 //GetSHA256Opts returns options relating to SHA-256.
 func GetSHA256Opts() core.HashOpts {
 	return &bccsp.SHA256Opts{}

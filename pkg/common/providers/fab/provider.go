@@ -8,8 +8,8 @@ package fab
 
 import (
 	reqContext "context"
-	"crypto/tls"
-	"crypto/x509"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmtls"
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/options"
@@ -161,10 +161,10 @@ type Providers interface {
 // cert pool implementation.
 type CertPool interface {
 	// Get returns the cert pool, optionally adding the provided certs
-	Get() (*x509.CertPool, error)
+	Get() (*sm2.CertPool, error)
 	//Add allows adding certificates to CertPool
 	//Call Get() after Add() to get the updated certpool
-	Add(certs ...*x509.Certificate)
+	Add(certs ...*sm2.Certificate)
 }
 
 // MetricsProvider represents a provider of metrics.

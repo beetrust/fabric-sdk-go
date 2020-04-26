@@ -11,14 +11,15 @@ Please review third_party pinning scripts and patches for more details.
 package lib
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
+	tls "github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmtls"
 	"net/http"
 
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/util"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 var clientAuthTypes = map[string]tls.ClientAuthType{
@@ -64,4 +65,20 @@ func addQueryParm(req *http.Request, name, value string) {
 type CertificateDecoder struct {
 	certIDCount map[string]int
 	storePath   string
+}
+
+var providerName string
+
+func IsGMConfig() bool {
+	if providerName == "" {
+		return false
+	}
+	if strings.ToUpper(providerName) == "GM" {
+		return true
+	}
+	return false
+}
+
+func SetProviderName(name string) {
+	providerName = name
 }

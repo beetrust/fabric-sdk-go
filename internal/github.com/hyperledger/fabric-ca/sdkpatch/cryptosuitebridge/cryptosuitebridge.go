@@ -117,3 +117,16 @@ func GetX509PublicKeyImportOpts(ephemeral bool) core.KeyImportOpts {
 func GetECDSAPrivateKeyImportOpts(ephemeral bool) core.KeyImportOpts {
 	return &bccsp.ECDSAPrivateKeyImportOpts{Temporary: ephemeral}
 }
+
+//add by bryan
+func GetGMSM2KeyGenOpts(ephemeral bool) core.KeyImportOpts {
+	return &bccsp.GMSM2KeyGenOpts{Temporary: ephemeral}
+}
+
+func GetGMSM2PrivateKeyImportOpts(ephemeral bool) core.KeyImportOpts {
+	return &bccsp.GMSM2PrivateKeyImportOpts{Temporary: ephemeral}
+}
+
+func GetGMSM2PublicKeyImportOpts(ephemeral bool) core.KeyImportOpts {
+	return &bccsp.GMSM2PublicKeyImportOpts{Temporary: ephemeral}
+}

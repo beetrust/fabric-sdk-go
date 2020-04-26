@@ -25,14 +25,15 @@ package core
 
 import (
 	"crypto"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp"
 	"hash"
 )
 
-//CryptoSuite adaptor for all bccsp functionalities used by SDK
+// CryptoSuite adaptor for all bccsp functionalities used by SDK
 type CryptoSuite interface {
 
 	// KeyGen generates a key using opts.
-	KeyGen(opts KeyGenOpts) (k Key, err error)
+	KeyGen(opts KeyGenOpts) (k Key, k1 bccsp.Key, err error)
 
 	// KeyImport imports a key from its raw representation using opts.
 	// The opts argument should be appropriate for the primitive used.

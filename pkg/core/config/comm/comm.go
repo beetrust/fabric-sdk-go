@@ -7,9 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package comm
 
 import (
-	"crypto/tls"
-
-	"crypto/x509"
+	"github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric-sdk-go/internal/github.com/tjfoc/gmtls"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite"
@@ -18,7 +17,7 @@ import (
 
 // TLSConfig returns the appropriate config for TLS including the root CAs,
 // certs for mutual TLS, and server host override. Works with certs loaded either from a path or embedded pem.
-func TLSConfig(cert *x509.Certificate, serverName string, config fab.EndpointConfig) (*tls.Config, error) {
+func TLSConfig(cert *sm2.Certificate, serverName string, config fab.EndpointConfig) (*tls.Config, error) {
 
 	if cert != nil {
 		config.TLSCACertPool().Add(cert)

@@ -19,13 +19,13 @@ import (
 
 const (
 	defEnabled       = true
-	defHashAlgorithm = "SHA2"
+	defHashAlgorithm = "GMSM3" // "SHA2"
 	defLevel         = 256
-	defProvider      = "SW"
+	defProvider      = "GM" // "SW"
 	defSoftVerify    = true
 )
 
-//ConfigFromBackend returns CryptoSuite config implementation for given backend
+// ConfigFromBackend returns CryptoSuite config implementation for given backend
 func ConfigFromBackend(coreBackend ...core.ConfigBackend) core.CryptoSuiteConfig {
 	return &Config{backend: lookup.New(coreBackend...)}
 }
@@ -62,7 +62,7 @@ func (c *Config) SecurityLevel() int {
 	return cast.ToInt(val)
 }
 
-//SecurityProvider provider SW or PKCS11
+// SecurityProvider provider SW or PKCS11
 func (c *Config) SecurityProvider() string {
 	val, ok := c.backend.Lookup("client.BCCSP.security.default.provider")
 	if !ok {
@@ -71,7 +71,7 @@ func (c *Config) SecurityProvider() string {
 	return strings.ToLower(cast.ToString(val))
 }
 
-//SoftVerify flag
+// SoftVerify flag
 func (c *Config) SoftVerify() bool {
 	val, ok := c.backend.Lookup("client.BCCSP.security.softVerify")
 	if !ok {
@@ -80,7 +80,7 @@ func (c *Config) SoftVerify() bool {
 	return cast.ToBool(val)
 }
 
-//SecurityProviderLibPath will be set only if provider is PKCS11
+// SecurityProviderLibPath will be set only if provider is PKCS11
 func (c *Config) SecurityProviderLibPath() string {
 	configuredLibs := c.backend.GetString("client.BCCSP.security.library")
 	libPaths := strings.Split(configuredLibs, ",")
@@ -100,12 +100,12 @@ func (c *Config) SecurityProviderLibPath() string {
 	return lib
 }
 
-//SecurityProviderPin will be set only if provider is PKCS11
+// SecurityProviderPin will be set only if provider is PKCS11
 func (c *Config) SecurityProviderPin() string {
 	return c.backend.GetString("client.BCCSP.security.pin")
 }
 
-//SecurityProviderLabel will be set only if provider is PKCS11
+// SecurityProviderLabel will be set only if provider is PKCS11
 func (c *Config) SecurityProviderLabel() string {
 	return c.backend.GetString("client.BCCSP.security.label")
 }
