@@ -26,6 +26,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+
+// The response to the POST /gencrl request
+type genCRLResponseNet struct {
+	// Base64 encoding of PEM-encoded CRL
+	CRL string
+}
+
 // Identity is fabric-ca's implementation of an identity
 type Identity struct {
 	name   string
@@ -140,6 +147,27 @@ func (i *Identity) Revoke(req *api.RevocationRequest) (*api.RevocationResponse, 
 	}
 	return &api.RevocationResponse{RevokedCerts: result.RevokedCerts, CRL: crl}, nil
 }
+
+// GenCRL generates CRL
+func (i *Identity) GenCRL(req *api.GenCRLRequest) (*api.GenCRLResponse, error) {
+	log.Debugf("Entering identity.GenCRL %+v", req)
+	reqBody, err := util.Marshal(req, "GenCRLRequest")
+	if err != nil {
+		return nil, err
+	}
+	var result genCRLResponseNet
+	err = i.Post("gencrl", reqBody, &result, nil)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Successfully generated CRL: %+v", req)
+	crl, err := util.B64Decode(result.CRL)
+	if err != nil {
+		return nil, err
+	}
+	return &api.GenCRLResponse{CRL: crl}, nil
+}
+
 
 // GetIdentity returns information about the requested identity
 func (i *Identity) GetIdentity(id, caname string) (*api.GetIDResponse, error) {

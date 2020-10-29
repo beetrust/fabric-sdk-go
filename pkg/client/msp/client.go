@@ -17,6 +17,7 @@ package msp
 
 import (
 	"fmt"
+	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 
@@ -457,6 +458,21 @@ func (c *Client) Revoke(request *RevocationRequest) (*RevocationResponse, error)
 		RevokedCerts: revokedCerts,
 		CRL:          resp.CRL,
 	}, nil
+}
+
+// Get CRL Info with the Fabric CA
+//  Parameters:
+//  request is GenCRL request
+//
+//  Returns:
+//  CRL response
+func (c *Client) GenCRL(req *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error) {
+	ca, err := newCAClient(c.ctx, c.orgName, c.caID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ca.GenCRL(req)
 }
 
 // GetCAInfo returns generic CA information

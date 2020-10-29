@@ -8,6 +8,7 @@ package api
 
 import (
 	"errors"
+	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 )
 
 var (
@@ -21,6 +22,7 @@ type CAClient interface {
 	Reenroll(request *ReenrollmentRequest) error
 	Register(request *RegistrationRequest) (string, error)
 	Revoke(request *RevocationRequest) (*RevocationResponse, error)
+	GenCRL(request *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error)
 	GetCAInfo() (*GetCAInfoResponse, error)
 	CreateIdentity(request *IdentityRequest) (*IdentityResponse, error)
 	GetIdentity(id, caname string) (*IdentityResponse, error)

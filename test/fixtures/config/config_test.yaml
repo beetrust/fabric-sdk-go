@@ -609,3 +609,7 @@ metrics:
 
     # prefix is prepended to all emitted statsd metrics
     prefix:
+
+
+  cryptoconfig:
+    path: /tmp/msp/local

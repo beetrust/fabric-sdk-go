@@ -176,6 +176,20 @@ func (c *fabricCAAdapter) Revoke(key core.Key, cert []byte, request *api.Revocat
 	}, nil
 }
 
+// GenCRL handles crl query.
+// key: registrar private key
+// cert: registrar enrollment certificate
+// request: Revocation Request
+func (c *fabricCAAdapter) GenCRL(key core.Key, cert []byte, request *caapi.GenCRLRequest) (*caapi.GenCRLResponse,
+	error) {
+	registrar, err := c.newIdentity(key, cert)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create CA signing identity")
+	}
+
+	return registrar.GenCRL(request)
+}
+
 // GetCAInfo returns generic CA information
 func (c *fabricCAAdapter) GetCAInfo(caname string) (*api.GetCAInfoResponse, error) {
 	logger.Debugf("Get CA info [%s]", caname)

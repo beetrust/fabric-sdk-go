@@ -8,6 +8,7 @@ package msp
 
 import (
 	"fmt"
+	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 	"strings"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/logging"
@@ -368,6 +369,33 @@ func (c *CAClientImpl) Revoke(request *api.RevocationRequest) (*api.RevocationRe
 	}
 
 	resp, err := c.adapter.Revoke(registrar.PrivateKey(), registrar.EnrollmentCertificate(), request)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to revoke")
+	}
+	return resp, nil
+}
+
+// Get CRL with the Fabric CA
+// registrar: The User that is initiating the revocation
+// request: Revocation Request
+func (c *CAClientImpl) GenCRL(request *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error) {
+	if c.adapter == nil {
+		return nil, fmt.Errorf("no CAs configured for organization: %s", c.orgName)
+	}
+	if c.registrar.EnrollID == "" {
+		return nil, api.ErrCARegistrarNotFound
+	}
+	// Validate revocation request
+	if request == nil {
+		return nil, errors.New("revocation request is required")
+	}
+
+	registrar, err := c.getRegistrar(c.registrar.EnrollID, c.registrar.EnrollSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.adapter.GenCRL(registrar.PrivateKey(), registrar.EnrollmentCertificate(), request)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to revoke")
 	}
