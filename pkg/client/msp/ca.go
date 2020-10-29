@@ -65,6 +65,21 @@ type RevocationResponse struct {
 	CRL []byte
 }
 
+// GenCRLRequest represents a request to get CRL for the specified certificate authority
+type GenCRLRequest struct {
+	CAName        string `json:"caname,omitempty" skip:"true"`
+	RevokedAfter  string `json:"revokedafter,omitempty"`
+	RevokedBefore string `json:"revokedbefore,omitempty"`
+	ExpireAfter   string `json:"expireafter,omitempty"`
+	ExpireBefore  string `json:"expirebefore,omitempty"`
+}
+
+// GenCRLResponse represents a response to get CRL
+type GenCRLResponse struct {
+	// CRL is PEM-encoded certificate revocation list (CRL) that contains requested unexpired revoked certificates
+	CRL []byte
+}
+
 // RevokedCert represents a revoked certificate
 type RevokedCert struct {
 	// Serial number of the revoked certificate

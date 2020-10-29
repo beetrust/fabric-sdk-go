@@ -18,6 +18,7 @@ package msp
 import (
 	"fmt"
 	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
+	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 
@@ -466,13 +467,49 @@ func (c *Client) Revoke(request *RevocationRequest) (*RevocationResponse, error)
 //
 //  Returns:
 //  CRL response
-func (c *Client) GenCRL(req *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error) {
+func (c *Client) GenCRL(request *GenCRLRequest) (*GenCRLResponse, error) {
 	ca, err := newCAClient(c.ctx, c.orgName, c.caID)
 	if err != nil {
 		return nil, err
 	}
 
-	return ca.GenCRL(req)
+	var ra, rb, ea, eb time.Time
+	if request.RevokedAfter != "" {
+		ra, err = time.Parse(time.RFC3339, request.RevokedAfter)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if request.RevokedBefore != "" {
+		rb, err = time.Parse(time.RFC3339, request.RevokedBefore)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if request.ExpireAfter != "" {
+		ea, err = time.Parse(time.RFC3339, request.ExpireAfter)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if request.ExpireBefore != "" {
+		eb, err = time.Parse(time.RFC3339, request.ExpireBefore)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp, err := ca.GenCRL(&caapi.GenCRLRequest{
+		CAName:        request.CAName,
+		RevokedAfter:  ra,
+		RevokedBefore: rb,
+		ExpireAfter:   ea,
+		ExpireBefore:  eb,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &GenCRLResponse{CRL: resp.CRL}, nil
 }
 
 // GetCAInfo returns generic CA information
