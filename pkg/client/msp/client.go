@@ -17,9 +17,6 @@ package msp
 
 import (
 	"fmt"
-	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
-	"time"
-
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 
 	"strings"
@@ -473,39 +470,8 @@ func (c *Client) GenCRL(request *GenCRLRequest) (*GenCRLResponse, error) {
 		return nil, err
 	}
 
-	var ra, rb, ea, eb time.Time
-	if request.RevokedAfter != "" {
-		ra, err = time.Parse(time.RFC3339, request.RevokedAfter)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if request.RevokedBefore != "" {
-		rb, err = time.Parse(time.RFC3339, request.RevokedBefore)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if request.ExpireAfter != "" {
-		ea, err = time.Parse(time.RFC3339, request.ExpireAfter)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if request.ExpireBefore != "" {
-		eb, err = time.Parse(time.RFC3339, request.ExpireBefore)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	resp, err := ca.GenCRL(&caapi.GenCRLRequest{
-		CAName:        request.CAName,
-		RevokedAfter:  ra,
-		RevokedBefore: rb,
-		ExpireAfter:   ea,
-		ExpireBefore:  eb,
-	})
+	req := mspapi.GenCRLRequest(*request)
+	resp, err := ca.GenCRL(&req)
 	if err != nil {
 		return nil, err
 	}

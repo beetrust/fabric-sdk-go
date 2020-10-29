@@ -8,7 +8,6 @@ package msp
 
 import (
 	"fmt"
-	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 	"strings"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/logging"
@@ -378,7 +377,7 @@ func (c *CAClientImpl) Revoke(request *api.RevocationRequest) (*api.RevocationRe
 // Get CRL with the Fabric CA
 // registrar: The User that is initiating the revocation
 // request: Revocation Request
-func (c *CAClientImpl) GenCRL(request *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error) {
+func (c *CAClientImpl) GenCRL(request *api.GenCRLRequest) (*api.GenCRLResponse, error) {
 	if c.adapter == nil {
 		return nil, fmt.Errorf("no CAs configured for organization: %s", c.orgName)
 	}

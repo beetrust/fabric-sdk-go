@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 package msp
 
+import "time"
+
 // AttributeRequest is a request for an attribute.
 type AttributeRequest struct {
 	Name     string
@@ -67,11 +69,11 @@ type RevocationResponse struct {
 
 // GenCRLRequest represents a request to get CRL for the specified certificate authority
 type GenCRLRequest struct {
-	CAName        string `json:"caname,omitempty" skip:"true"`
-	RevokedAfter  string `json:"revokedafter,omitempty"`
-	RevokedBefore string `json:"revokedbefore,omitempty"`
-	ExpireAfter   string `json:"expireafter,omitempty"`
-	ExpireBefore  string `json:"expirebefore,omitempty"`
+	CAName        string    `json:"caname,omitempty" skip:"true"`
+	RevokedAfter  time.Time `json:"revokedafter,omitempty"`
+	RevokedBefore time.Time `json:"revokedbefore,omitempty"`
+	ExpireAfter   time.Time `json:"expireafter,omitempty"`
+	ExpireBefore  time.Time `json:"expirebefore,omitempty"`
 }
 
 // GenCRLResponse represents a response to get CRL

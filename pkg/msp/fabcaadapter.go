@@ -7,9 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package msp
 
 import (
-	"github.com/pkg/errors"
-
 	"encoding/json"
+	"github.com/pkg/errors"
 
 	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 	calib "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/lib"
@@ -179,15 +178,27 @@ func (c *fabricCAAdapter) Revoke(key core.Key, cert []byte, request *api.Revocat
 // GenCRL handles crl query.
 // key: registrar private key
 // cert: registrar enrollment certificate
-// request: Revocation Request
-func (c *fabricCAAdapter) GenCRL(key core.Key, cert []byte, request *caapi.GenCRLRequest) (*caapi.GenCRLResponse,
+// request: GenCRL Request
+func (c *fabricCAAdapter) GenCRL(key core.Key, cert []byte, request *api.GenCRLRequest) (*api.GenCRLResponse,
 	error) {
 	registrar, err := c.newIdentity(key, cert)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create CA signing identity")
 	}
 
-	return registrar.GenCRL(request)
+	// Create revocation request
+	var req = caapi.GenCRLRequest{
+		CAName:        request.CAName,
+		RevokedAfter:  request.RevokedAfter,
+		RevokedBefore: request.RevokedBefore,
+		ExpireAfter:   request.ExpireAfter,
+		ExpireBefore:  request.ExpireBefore,
+	}
+	resp, err := registrar.GenCRL(&req)
+	if err != nil {
+		return nil, err
+	}
+	return &api.GenCRLResponse{CRL: resp.CRL}, nil
 }
 
 // GetCAInfo returns generic CA information

@@ -42,6 +42,11 @@ func (mgr *MockCAClient) Revoke(request *api.RevocationRequest) (*api.Revocation
 	return nil, errors.New("not implemented")
 }
 
+// GenCRL
+func (mgr *MockCAClient) GenCRL(request *api.GenCRLRequest) (*api.GenCRLResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
 // CreateIdentity creates an identity
 func (mgr *MockCAClient) CreateIdentity(request *api.IdentityRequest) (*api.IdentityResponse, error) {
 	return nil, errors.New("not implemented")

@@ -8,7 +8,7 @@ package api
 
 import (
 	"errors"
-	caapi "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
+	"time"
 )
 
 var (
@@ -22,7 +22,7 @@ type CAClient interface {
 	Reenroll(request *ReenrollmentRequest) error
 	Register(request *RegistrationRequest) (string, error)
 	Revoke(request *RevocationRequest) (*RevocationResponse, error)
-	GenCRL(request *caapi.GenCRLRequest) (*caapi.GenCRLResponse, error)
+	GenCRL(request *GenCRLRequest) (*GenCRLResponse, error)
 	GetCAInfo() (*GetCAInfoResponse, error)
 	CreateIdentity(request *IdentityRequest) (*IdentityResponse, error)
 	GetIdentity(id, caname string) (*IdentityResponse, error)
@@ -128,6 +128,21 @@ type RevocationResponse struct {
 	// RevokedCerts is an array of certificates that were revoked
 	RevokedCerts []RevokedCert
 	// CRL is PEM-encoded certificate revocation list (CRL) that contains all unexpired revoked certificates
+	CRL []byte
+}
+
+// GenCRLRequest represents a request to get CRL for the specified certificate authority
+type GenCRLRequest struct {
+	CAName        string    `json:"caname,omitempty" skip:"true"`
+	RevokedAfter  time.Time `json:"revokedafter,omitempty"`
+	RevokedBefore time.Time `json:"revokedbefore,omitempty"`
+	ExpireAfter   time.Time `json:"expireafter,omitempty"`
+	ExpireBefore  time.Time `json:"expirebefore,omitempty"`
+}
+
+// GenCRLResponse represents a response to get CRL
+type GenCRLResponse struct {
+	// CRL is PEM-encoded certificate revocation list (CRL) that contains requested unexpired revoked certificates
 	CRL []byte
 }
 
